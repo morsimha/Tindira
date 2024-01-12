@@ -22,6 +22,4 @@ We like to keep things neat and tidy. Each meeting gets its own folder organized
 | Mor Simha           | moroy9@gmail.com        |
 | Ben Avrahami        | benben733@gmail.com     |
 | Yehonatan Simian    | yonisimian@gmail.com    |
-| Omer Komsi          | omerkomsi@gmail.com     |
-
-
+| Omer Komissarchik   | omerkomsi@gmail.com     |
