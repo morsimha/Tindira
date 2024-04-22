@@ -1,18 +1,29 @@
 <template>
-  <VueDraggable ref="el" v-model="links" @end="onEnd" @start="onStart" handle=".drag-area">
+  <VueDraggable ref="el" v-model="dummyArrForSwiping" @end="onEnd" @start="onStart" handle=".drag-area">
     <transition name="swipe">
       <Card class="w-4/5 mx-auto swipe-card" ref="card">
         <template #header>
-          <Carousel :value="links" :numVisible="1" :numScroll="1" circular>
+
+          <Galleria v-if="isBigScreen" :value="nextListingsArr[0]?.images" :numVisible="3" :circular="true"
+            :showThumbnails="false" :showIndicators="true" :showItemNavigators="true" :changeItemOnIndicatorHover="true"
+            :fullscreen="true">
+            <template #item="slotProps">
+
+              <div class="relative mx-auto">
+                <Image alt="Apartment images" width="700" class="w-full border-round" :src="slotProps.item" />
+              </div>
+
+            </template>
+            <template #thumbnail="slotProps">
+              <img :src="slotProps.item" alt="Apartment images" style="display: block" />
+            </template>
+          </Galleria>
+
+          <Carousel v-else :value="nextListingsArr[0]?.images" :numVisible="1" :numScroll="1" circular>
             <template #item="slotProps">
               <div class="border-1 surface-border border-round m-2 p-3">
                 <div class="relative mx-auto">
-                  <Image
-                    alt="Apartment images"
-                    class="w-full border-round"
-                    :src="slotProps.data.src"
-                    preview
-                  />
+                  <Image alt="Apartment images" width="400" class="w-full border-round" :src="slotProps.data" preview />
                 </div>
               </div>
             </template>
@@ -20,11 +31,13 @@
         </template>
 
         <template #title>
-          <div class="drag-area">Lior's Home</div>
+          <div class="drag-area">{{ nextListingsArr[0]?.title ?? 'You swiped all the apartments! Time to take a break'
+            }}
+          </div>
         </template>
         <template #subtitle>
           <div class="drag-area flex justify-between items-center">
-            Sublet- Tel Aviv
+            Full information
             <Button severity="secondary" text rounded aria-label="Info" class="mr-2 text-3xl">
               <template #icon>
                 <Icon icon="ooui:info-filled"></Icon>
@@ -33,7 +46,7 @@
           </div>
         </template>
         <template #content>
-          <p class="drag-area m-0">A nice cosy home, in the most vibrant place in tel aviv</p>
+          <p class="drag-area m-0">{{ nextListingsArr[0]?.description }}</p>
         </template>
         <template #footer>
           <div class="drag-area mx-auto space-x-24 flex justify-center drag-area">
@@ -56,32 +69,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Icon } from '@iconify/vue'
-import Card from 'primevue/card'
-import Carousel from 'primevue/carousel'
-import Button from 'primevue/Button'
-import Image from 'primevue/image'
-import { VueDraggable } from 'vue-draggable-plus'
 
-const links = ref([
-  {
-    src: 'https://foyr.com/learn/wp-content/uploads/2022/05/guest-room-in-a-house-1024x752.jpg',
-    alt: 'Apartment Image 1'
-  },
-  {
-    src: 'https://chesmar.com/wp-content/uploads/2019/05/how-many-bedrooms-should-my-new-home-have.jpg',
-    alt: 'Apartment Image 2'
-  },
-  {
-    src: 'https://foyr.com/learn/wp-content/uploads/2022/05/guest-room-in-a-house-1024x752.jpg',
-    alt: 'Apartment Image 3'
-  },
-  {
-    src: 'https://www.thespruce.com/thmb/2_Q52GK3rayV1wnqm6vyBvgI3Ew=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/put-together-a-perfect-guest-room-1976987-hero-223e3e8f697e4b13b62ad4fe898d492d.jpg',
-    alt: 'Apartment Image 4'
-  }
-])
+import { computed, onMounted, ref } from "vue";
+import { Icon } from '@iconify/vue';
+import Card from 'primevue/card';
+import Carousel from 'primevue/carousel';
+import Galleria from 'primevue/galleria';
+import Button from 'primevue/Button';
+import Image from 'primevue/image';
+import { VueDraggable } from 'vue-draggable-plus'
+import API from "@/api";
+import type { Listing } from "@/interfaces/listing.interface";
+
+// let currentListing = ref<Listing>()
+let nextListingsArr = ref<Listing[]>(await API.getNextListings(5, "rent", {}, "galben"))
+await setNextListing();
+// console.log(currentListing.value)
+
+const isBigScreen = computed(() => window.innerWidth > 768);
+
+const dummyArrForSwiping = ref([])
 
 let startingX = 0
 let sensitivity = 50
@@ -118,15 +125,30 @@ function onStart(event: any) {
   console.log('starting x is ', startingX)
 }
 
-function swipe(isLike: boolean) {
+onMounted(() => {
   const el = document.querySelector('.swipe-card')
-  el!.addEventListener('animationend', () => {
+  el!.addEventListener('animationend', async () => {
+    nextListingsArr.value.shift();
+    await setNextListing()
     el!.classList.remove('animate-right')
     el!.classList.remove('animate-left')
   })
+  
+})
+
+async function swipe(isLike: boolean) {
+  const el = document.querySelector('.swipe-card')
   if (el) {
     isLike ? el.classList.add('animate-right') : el.classList.add('animate-left')
   }
+}
+
+async function setNextListing() {
+  // currentListing.value = nextListingsArr.value[0]
+  // console.log("currentListing", currentListing.value)
+  const nextListing = await API.getNextListings(1, "rent", {}, "galben");
+  nextListingsArr.value.push(...nextListing);
+  console.log("nextArr", nextListingsArr.value)
 }
 </script>
 
