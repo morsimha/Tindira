@@ -1,3 +1,4 @@
+import type { SelectedFilters } from "@/stores/State.interface";
 import axios, { AxiosError, type AxiosInstance, type AxiosResponse } from "axios";
 import Message from "primevue/message";
 
@@ -7,7 +8,7 @@ import Message from "primevue/message";
 class _API {
     service: AxiosInstance = axios;
     constructor() {
-        let service = axios.create({
+        const service = axios.create({
             //@ts-ignore
             baseURL: import.meta.env.VITE_API_BASE_URL,
             headers: {
@@ -35,12 +36,12 @@ class _API {
 
 
     async checkHealth() {
-        let response = await this.service.get("/health");
+        const response = await this.service.get("/health");
         return response;
     }
 
-    async getNextListings(amount: number, category: string, filters: any, username: string, ignoreIds: string[]) {
-        let response = await this.service.get(`/listings/getNext?username=${username}&amount=${amount.toString()}&category=${category}&listingId=0`);
+    async getNextListings(amount: number, filters: SelectedFilters, username: string, ignoreIds: string[]) {
+        const response = await this.service.get(`/listings/getNext?username=${username}&amount=${amount.toString()}&category=${filters.category}&listingId=0`);
         console.log(response)
         return response.data;
     }
@@ -48,7 +49,7 @@ class _API {
     //dummy method to check connection to backend
     //to be removed later
     async checkLogin() {
-        let response = await this.service.post("/login", {
+        const response = await this.service.post("/login", {
             username: "galben",
             password: "abc"
         });
