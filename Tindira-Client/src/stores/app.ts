@@ -16,7 +16,8 @@ export const useAppStore = defineStore('app', {
       isAnimalFriendly: false,
       city: null,
       radiusInKm: null,
-      location: null
+      location: null,
+      isWithPorchOrGarden: false ,
     }
   }),
   getters: {},
