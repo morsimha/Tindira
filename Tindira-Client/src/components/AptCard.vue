@@ -63,6 +63,7 @@ import AptImageCarousel from './AptImageCarousel.vue';
 import { useDialog } from 'primevue/usedialog'
 
 import { useAppStore } from '../stores/app'
+import API from '@/api';
 
 const userStore = useAppStore()
 
@@ -118,6 +119,7 @@ async function swipe(isLike: boolean) {
     disableDrag.value = true;
     isLike ? el.classList.add('animate-right') : el.classList.add('animate-left')
   }
+  API.tagListing(userStore.nextListingsArr[0]?.listingId, "", isLike);
 }
 
 const dialog = useDialog()
@@ -125,10 +127,13 @@ const ApartmentDialog = defineAsyncComponent(() => import('@/components/AptDialo
 
 const showFullAptData = () => {
   dialog.open(ApartmentDialog, {
+    data: {
+      listing: userStore.nextListingsArr[0]
+    },
     props: {
       header: userStore.nextListingsArr[0]?.title,
       style: {
-        width: '95vw'
+        width: '100vw'
       },
       breakpoints: {
         '960px': '75vw',
