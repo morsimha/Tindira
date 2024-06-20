@@ -20,8 +20,8 @@ export const handler = async (event) => {
     return response;
   }
 
-  /*let body = JSON.parse(event.headers);
-  
+  /*let body = JSON.parse(event.headers)
+
   if (!validateParams(queryParams, body)) { // Check that query params for users have been passed
     const response = {
       statusCode: 400,
@@ -29,7 +29,7 @@ export const handler = async (event) => {
         "Access-Control-Allow-Origin": "*",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify("Query parameters haven't been set properly!")
+      body: JSON.stringify("Parameters haven't been set properly!")
     };
   
     return response;
@@ -76,58 +76,36 @@ export const handler = async (event) => {
         })
       };
   }*/
-  
+
   const db = new DynamoDBClient({ region: 'us-east-2' }); // Connect to DynamoDB
 
-  queryParams.id = "[" + queryParams.id + "]";
-  
-  let IDs = [];
-  
-  IDs = queryParams.id.slice(1, -1).split(','); // Convert query param to listing ID array
-  
-  if (IDs[0] === "") {
-    IDs = [];
-  }
-  
-  let listings = [];
-  
-  for (var i = 0; i < IDs.length; i++) { // Iterate over the IDs and query their corresponding listing in the DB 
-    const params = {
-      TableName: "TindiraListings",
-      Key: {
-        "listingId": { S: IDs[i] }
-      }
+  let exists = null;
+
+  try {
+    exists = await checkExistingUser(queryParams.username);
+  } catch (err) {
+    const response = { // Errors retrieving the user
+      statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,X-Amz-Security-Token,Authorization,X-Api-Key,X-Requested-With,Accept,Access-Control-Allow-Methods,Access-Control-Allow-Origin,Access-Control-Allow-Headers",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "*",
+        "X-Requested-With": "*"
+      },
+      body: JSON.stringify(err)
     };
-    try {
-      const command = new GetItemCommand(params);
-      const res = await db.send(command);
-      if (res.Item !== undefined) {
-        var marshalled = AWS.DynamoDB.Converter.unmarshall(res.Item);
-        listings.push(marshalled);
-      } else {
-        listings.push("Listing with ID=" + IDs[i] + " does not exist!");
-      }
-    } catch (err) {
-      const response = {
-        statusCode: 500,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify("Internal server error")
-      };
   
-      return response;
-    }
+    return response;
   }
   
-  const response = { // Success, return the listings
+  const response = {
     statusCode: 200,
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(listings),
+    body: JSON.stringify(exists)
   };
   
   return response;
@@ -140,24 +118,46 @@ export const handler = async (event) => {
 
 function validateParams(query, body) { // Validate query strings and request body
   
-  if (query.id === undefined || query.id === "" || body === undefined) {
+  if (query.username === undefined || query.username === "" || query.fields === undefined || query.fields === "" || body === undefined) {
     return false;
   }
 
   if (body.username === undefined || body.username === "" || body.token === undefined || body.token === "") {
     return false;
   }
-  
-  return true;
-  
+
+  return validateFields(query.fields);
 }
 
 function validateParams2(query) { // Validate query strings and request body
   
-  if (query.id === undefined || query.id === "") {
+  if (query.username === undefined || query.username === "" /*|| query.fields === undefined || query.fields === ""*/) {
     return false;
   }
   
+  //return validateFields(query.fields);
   return true;
-  
+}
+
+
+/*************************************************************************************************************************************************************************************/
+
+
+async function checkExistingUser(username) { // Query the user, check for its existance
+
+  const params = {
+    TableName: "TindiraUsers",
+    Key: {
+      "username": { S: username }
+    }
+  };
+
+  const command = new GetItemCommand(params);
+  const res = await db.send(command);
+  if (res.Item !== undefined) {
+    return true;
+  }
+
+  return false;
+
 }

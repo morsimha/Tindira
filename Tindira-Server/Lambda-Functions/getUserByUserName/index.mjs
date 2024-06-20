@@ -93,7 +93,7 @@ export const handler = async (event) => {
   
     return response;
   } else if (typeFields === 0) {
-    fields = ['history', 'fullName', 'listings', 'phoneNumber', 'profileDescription', 'profilePicture', 'reviews', 'roles'];
+    fields = ['history', 'fullName', 'listings', 'phoneNumber', 'profileDescription', 'profilePicture', 'reviews', 'roles', 'email'];
   } else {
     queryParams.fields = "[" + queryParams.fields + "]";
     fields = queryParams.fields.slice(1, -1).split(',');
@@ -125,7 +125,7 @@ export const handler = async (event) => {
         var marshalled = AWS.DynamoDB.Converter.unmarshall(res.Item);
         users.push(parseUser(marshalled, fields))
       } else {
-        users.push("User with provided ID does not exist!");
+        users.push("User with ID=" + IDs[i] + " does not exist!");
       }
     } catch (err) {
       const response = {
@@ -189,7 +189,7 @@ function validateFields(fields) { // Validate that all fields provided are legal
     return 2;
   }
 
-  const legalFields = ['username', 'history', 'fullName', 'listings', 'phoneNumber', 'profileDescription', 'profilePicture', 'reviews', 'roles'];
+  const legalFields = ['username', 'history', 'fullName', 'listings', 'phoneNumber', 'profileDescription', 'profilePicture', 'reviews', 'roles', 'email'];
 
   fields = "[" + fields + "]";
   let fieldsArray = [];
