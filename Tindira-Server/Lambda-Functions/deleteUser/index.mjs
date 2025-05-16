@@ -2,6 +2,7 @@ import { DynamoDBClient, GetItemCommand, DeleteItemCommand } from '@aws-sdk/clie
 import AWS from 'aws-sdk';
 
 const lambda = new AWS.Lambda();
+const db = new DynamoDBClient({ region: 'us-east-2' }); // Connect to DynamoDB
 
 export const handler = async (event) => {
 
@@ -19,65 +20,6 @@ export const handler = async (event) => {
   
     return response;
   }
-
-  /*let body = JSON.parse(event.headers);
-  
-  if (!validateParams(queryParams, body)) { // Check that query params for users have been passed
-    const response = {
-      statusCode: 400,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify("Query parameters haven't been set properly!")
-    };
-  
-    return response;
-  }
-  
-  const lambdaParams = {
-    FunctionName: 'users-login-system', // Use this Lambda function to verify the token
-    InvocationType: 'RequestResponse',
-    Payload: JSON.stringify({
-      httpMethod: "POST",
-      path: "/verify",
-      body: JSON.stringify({
-        token: body.token,
-        user: {
-          username: body.username
-        }
-      })
-    })
-  };
-
-  try {
-    const response = await lambda.invoke(lambdaParams).promise(); // Handle response from the "verify" Lambda function
-    const payloadMessage = JSON.parse(JSON.parse(response.Payload).body).message
-    if (!payloadMessage || payloadMessage !== "success") {
-      const res = {
-        statusCode: 400,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify("Invalid verification token!")
-      };
-      return res;
-    }
-  } catch (error) { // Handle errors
-      return {
-        statusCode: 500,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: "Internal server error"
-        })
-      };
-  }*/
-  
-  const db = new DynamoDBClient({ region: 'us-east-2' }); // Connect to DynamoDB
   
   const params = {
     TableName: "TindiraUsers",
@@ -88,8 +30,10 @@ export const handler = async (event) => {
   
   try {
     const getCommand = new GetItemCommand(params); // Check whether the user we want to delete exists
-    const res = await db.send(getCommand);
+    let res = await db.send(getCommand);
     if (res.Item !== undefined) { // If exists, delete the user
+      let regularObj = AWS.DynamoDB.Converter.unmarshall(res.Item);
+      await deleteUsersListings(regularObj.listings);
       const command = new DeleteItemCommand(params);
       await db.send(command);
     } else {
@@ -111,7 +55,7 @@ export const handler = async (event) => {
           "Access-Control-Allow-Origin": "*",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify("Internal server error")
+        body: JSON.stringify(err)
       };
   
     return response;
@@ -156,4 +100,22 @@ function validateParams2(query) { // Validate query strings and request body
   
   return true;
   
+}
+
+
+/*************************************************************************************************************************************************************************************/
+
+
+async function deleteUsersListings(listings) {
+
+  for (var i = 0; i < listings.length; i++) {
+    const command = new DeleteItemCommand({
+      TableName: "TindiraListings",
+      Key: {
+        "listingId": { S: listings[i] },
+      },
+    });
+    await db.send(command);
+  }
+
 }

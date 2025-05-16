@@ -35,11 +35,11 @@ You can check out the live version of the Tindira web app [here](https://main--t
 
 ## Team Members
 
+- **Mor Simha**
 - **Ben Avrahami**
 - **Yoni Simian**
 - **Gal Ben Artzi**
 - **Omer Komissrachik**
-- **Mor Simha**
 
 ## Contributing
 

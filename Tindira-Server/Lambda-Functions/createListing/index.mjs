@@ -22,7 +22,7 @@ export const handler = async (event) => {
   let body = JSON.parse(event.body);
   let username = event.queryStringParameters.username;
   
-  if (username === undefined || username === "") {
+  /*if (username === undefined || username === "") {
     return {
       statusCode: 400,
       headers: headers,
@@ -38,7 +38,7 @@ export const handler = async (event) => {
       headers: headers,
       body: JSON.stringify(error)
     };
-  }
+  }*/
 
   const listingId = uuidv4(); // Create a unique ID for the new listing
 
